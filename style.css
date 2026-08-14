@@ -1,0 +1,648 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* ── CarePilot dark theme ──
+     Brand color: olive green #6b7a3e. Palette built around it: a near-black
+     slate base (not pure black, so surfaces still read as distinct layers),
+     the olive as the primary interactive/brand color, a soft pale-olive tint
+     for readable text accents, and a warm amber as a secondary accent for the
+     central hub + highlighted callouts so the UI isn't monochrome green. */
+  --bg: #14171a;              /* page background */
+  --surface: #1b1f24;         /* header / sidebars / node fills */
+  --raised: #242a31;          /* hover states, panel headers, raised blocks */
+  --border: #333c44;          /* hairline borders */
+  --muted: #8b95a1;           /* secondary / muted text */
+  --body: #e8eaec;            /* primary text */
+
+  --accent: #6b7a3e;          /* brand olive — solid fills, active states, primary border */
+  --accent-light: #262d1a;    /* dark olive tint — hover backgrounds */
+  --accent-dark: #c4d19f;     /* pale olive — readable titles / emphasis text on dark bg */
+
+  --center: #c98a3a;          /* warm amber — secondary accent, hub + highlights */
+  --center-light: #2c2313;    /* dark amber tint — backgrounds for amber accents */
+  --center-text: #f0d8a8;     /* pale amber — text on dark amber panels */
+
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --sidebar-w: 300px;
+  --sidebar-patient-w: 360px;
+  --sidebar-metadata-w: 390px;
+  --panel-height: min(680px, calc(100vh - 92px));
+  --transition: 180ms ease;
+  --font-fa: 'Vazirmatn', Tahoma, 'Segoe UI', Arial, sans-serif;
+}
+
+body {
+  font-family: var(--font-fa);
+  background: var(--bg);
+  color: var(--body);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+/* ── Header ──
+   3-column grid keeps the brand name perfectly centered no matter how wide
+   the badge or subtitle text is. In RTL, column 1 sits on the right edge and
+   column 3 on the left edge. */
+header {
+  padding: 14px 24px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  column-gap: 12px;
+}
+header .brand {
+  justify-self: center;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--accent-dark);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+header .badge {
+  justify-self: start;
+}
+header .header-sub {
+  justify-self: end;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.badge {
+  font-size: 0.85rem;
+  background: var(--accent-light);
+  color: var(--accent-dark);
+  border-radius: 99px;
+  padding: 4px 14px;
+  font-weight: 600;
+  border: 1px solid var(--accent);
+}
+
+/* ── Layout: diagram + sidebars ── */
+.layout {
+  position: relative;
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── Diagram area ── */
+.diagram-wrap {
+  flex: 1;
+  min-width: 0; /* allow this flex item to actually shrink instead of forcing overflow */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  min-height: 0;
+  transition: filter var(--transition);
+}
+.diagram-wrap.dimmed { filter: brightness(0.82); }
+.layout.panels-open .diagram-wrap {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  align-items: flex-end;
+  padding: calc(var(--panel-height) + 24px) 32px 24px;
+  z-index: 1;
+}
+
+/* With three panels open, keep the diagram in a full-width layer below them.
+   Otherwise the sidebars consume the horizontal flex space and clip the ring. */
+.layout.panels-open .sidebar-group {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 5;
+  width: 100%;
+  height: var(--panel-height);
+  justify-content: flex-start;
+  background: var(--bg);
+}
+.layout.panels-open .sidebar {
+  height: 100%;
+}
+.layout.panels-open .sidebar-inner {
+  height: 100%;
+}
+.layout.panels-open .sidebar-list,
+.layout.panels-open .patient-content,
+.layout.panels-open .detail-content {
+  min-height: 0;
+  overflow-y: auto;
+}
+.layout.panels-open .patient-content {
+  display: flex;
+  justify-content: center;
+}
+.layout.panels-open .phone-preview {
+  width: 100%;
+  max-width: 320px;
+  align-self: flex-start;
+}
+
+@media (min-width: 769px) {
+  /* Keep the diagram above the panel row on desktop. */
+  .layout.panels-open {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  .layout.panels-open .sidebar-group {
+    position: relative;
+    top: auto;
+    right: auto;
+    height: var(--panel-height);
+    width: 100%;
+    order: 2;
+  }
+  .layout.panels-open .diagram-wrap {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    height: min(620px, calc(100vh - 92px));
+    min-height: 520px;
+    padding: 32px;
+    align-items: center;
+    order: 1;
+  }
+}
+
+.diagram {
+  position: relative;
+  width: min(580px, 90vw);
+  aspect-ratio: 1;
+}
+
+/* ── Center circle ── */
+.center-node {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 158px; height: 158px;
+  border-radius: 50%;
+  background: var(--center);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 0.98rem;
+  font-weight: 700;
+  line-height: 1.4;
+  padding: 14px;
+  box-shadow: 0 4px 24px rgba(201, 138, 58, 0.4);
+  z-index: 2;
+  letter-spacing: 0.02em;
+}
+
+/* ── Satellite circles ── */
+.node {
+  position: absolute;
+  width: 112px; height: 112px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 2px solid var(--accent);
+  color: var(--accent-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.3;
+  padding: 10px;
+  cursor: pointer;
+  transition: background var(--transition), box-shadow var(--transition), border-color var(--transition), transform var(--transition);
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  user-select: none;
+}
+.node:hover {
+  background: var(--accent-light);
+  border-color: var(--accent-dark);
+  box-shadow: 0 4px 18px rgba(107, 122, 62, 0.35);
+  transform: translate(-50%, -50%) scale(1.06);
+}
+.node:focus-visible {
+  outline: 3px solid var(--accent-dark);
+  outline-offset: 3px;
+}
+.node.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent-dark);
+  box-shadow: 0 4px 20px rgba(107, 122, 62, 0.5);
+}
+
+/* connecting lines via SVG */
+.connector-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+.connector-svg line {
+  stroke: var(--border);
+  stroke-width: 1.5;
+}
+
+/* ── Sidebars ── */
+.sidebar-group {
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+}
+
+.sidebar {
+  width: 0;
+  overflow: hidden;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  transition: width 220ms ease;
+  flex-shrink: 0;
+}
+.sidebar.open { width: var(--sidebar-w); }
+.sidebar.patient-panel.open { width: var(--sidebar-patient-w); }
+.sidebar.metadata-panel.open { width: var(--sidebar-metadata-w); }
+
+.sidebar-inner {
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+.sidebar.patient-panel .sidebar-inner {
+  width: var(--sidebar-patient-w);
+  min-width: var(--sidebar-patient-w);
+}
+.sidebar.metadata-panel .sidebar-inner {
+  width: var(--sidebar-metadata-w);
+  min-width: var(--sidebar-metadata-w);
+}
+
+.sidebar-header {
+  padding: 16px 18px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: var(--raised);
+}
+.sidebar-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--accent-dark);
+  line-height: 1.4;
+}
+.close-btn {
+  width: 32px; height: 32px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem;
+  color: var(--muted);
+  transition: background var(--transition), color var(--transition);
+  flex-shrink: 0;
+}
+.close-btn:hover { background: var(--raised); color: var(--body); }
+.close-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.sidebar-list {
+  list-style: none;
+  overflow-y: auto;
+  flex: 1;
+  padding: 10px 0;
+}
+.sidebar-list li button {
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 12px 18px;
+  text-align: right;
+  font-size: 0.95rem;
+  color: var(--body);
+  cursor: pointer;
+  border-right: 3px solid transparent;
+  transition: background var(--transition), border-color var(--transition), color var(--transition);
+  font-family: inherit;
+  line-height: 1.5;
+}
+.sidebar-list li button:hover {
+  background: var(--raised);
+  border-right-color: var(--accent);
+  color: var(--accent-dark);
+}
+.sidebar-list li button.active {
+  background: var(--accent-light);
+  border-right-color: var(--accent);
+  color: var(--accent-dark);
+  font-weight: 600;
+}
+.sidebar-list li button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+/* ── Detail panel ── */
+.detail-content {
+  overflow-y: auto;
+  flex: 1;
+  padding: 18px;
+}
+.detail-content p,
+.detail-content ul,
+.detail-content li,
+.detail-content .field-note {
+  font-size: 0.95rem;
+  line-height: 1.75;
+  color: var(--body);
+}
+
+.patient-content {
+  overflow-y: auto;
+  flex: 1;
+  padding: 18px;
+  background: #101315;
+}
+.patient-pages {
+  display: grid;
+  gap: 24px;
+  width: 100%;
+}
+.phone-preview {
+  max-width: 320px;
+  margin: 0 auto;
+  border: 8px solid #30363b;
+  border-radius: 28px;
+  background: #f4f6f1;
+  color: #20251d;
+  padding: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.35);
+}
+.phone-status {
+  display: flex;
+  justify-content: space-between;
+  font-size: .68rem;
+  color: #697261;
+  padding: 2px 5px 14px;
+}
+.phone-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 18px 14px;
+  box-shadow: 0 2px 8px rgba(27,35,25,.12);
+}
+.phone-page {
+  width: 100%;
+  margin: 0 auto;
+}
+.patient-input {
+  width: 100%;
+  border: 1px solid #c9d2bd;
+  border-radius: 11px;
+  padding: 11px 12px;
+  margin-bottom: 12px;
+  font: inherit;
+  color: #20251d;
+  background: #fbfcf8;
+}
+.patient-options-label {
+  color: #697261;
+  font-size: .78rem;
+  line-height: 1.6;
+  margin: 4px 0 8px;
+}
+.patient-condition,
+.patient-explanation {
+  color: #697261;
+  font-size: .78rem;
+  line-height: 1.7;
+  margin-bottom: 10px;
+}
+.patient-explanation {
+  border-top: 1px solid #e0e5da;
+  padding-top: 10px;
+  margin-top: 12px;
+}
+.phone-kicker {
+  color: #718244;
+  font-size: .72rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+.phone-question {
+  font-size: 1rem;
+  line-height: 1.8;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+.patient-options { display: grid; gap: 9px; }
+.patient-option {
+  border: 1px solid #d6dccb;
+  border-radius: 11px;
+  padding: 10px 11px;
+  font-size: .82rem;
+  line-height: 1.6;
+  background: #fbfcf8;
+}
+.patient-muted { color: #697261; font-size: .84rem; line-height: 1.8; }
+.metadata-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 7px;
+  font-size: .82rem;
+}
+.metadata-table th,
+.metadata-table td {
+  padding: 10px;
+  vertical-align: top;
+  line-height: 1.65;
+  background: var(--raised);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.metadata-table th {
+  width: 38%;
+  color: var(--accent-dark);
+  border-right: 1px solid var(--border);
+}
+.metadata-table td {
+  color: var(--body);
+  border-left: 1px solid var(--border);
+}
+.metadata-extra {
+  margin-top: 18px;
+  padding-top: 15px;
+  border-top: 1px solid var(--border);
+}
+.metadata-extra-title {
+  color: var(--accent-dark);
+  font-size: .86rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+.metadata-extra p {
+  color: var(--body);
+  font-size: .88rem;
+  line-height: 1.75;
+  margin-bottom: 8px;
+}
+.detail-content .label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 4px;
+  margin-top: 14px;
+  display: block;
+}
+.detail-content .label:first-child { margin-top: 0; }
+.detail-content .value-block {
+  background: var(--raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 0.95rem;
+  color: var(--body);
+  line-height: 1.6;
+  margin-bottom: 2px;
+}
+.detail-content ul {
+  padding-right: 18px;
+  margin: 4px 0;
+}
+.detail-content li { margin-bottom: 3px; }
+.detail-content .engine-note {
+  background: var(--center-light);
+  border: 1px solid #5a431f;
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 0.92rem;
+  color: var(--center-text);
+  line-height: 1.6;
+}
+.detail-content .field-note {
+  color: var(--muted);
+  font-style: italic;
+  margin-top: 6px;
+}
+
+/* ── Nutrition follow-up blocks ── */
+.followup-block {
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: var(--raised);
+  border: 1px solid var(--border);
+  border-right: 3px solid var(--accent);
+  border-radius: var(--radius-sm);
+}
+.followup-block .label { margin-top: 0; }
+
+/* ── Mobile: sidebars become overlay drawers instead of squeezing the diagram ── */
+@media (max-width: 768px) {
+  .layout {
+    position: relative; /* anchor point for the fixed sidebars below */
+  }
+
+  .layout.panels-open .diagram-wrap {
+    position: static;
+    inset: auto;
+    width: auto;
+    height: auto;
+    padding: 32px;
+    align-items: center;
+  }
+
+  .diagram {
+    width: min(420px, 88vw); /* a bit smaller so it always fits narrow phones */
+  }
+
+  /* clamp() keeps circle size tied to the actual viewport width, so satellites
+     never grow past what the (also-shrinking) ring radius can fit — fixes overlap
+     on narrow phones while still rendering larger text than the old fixed sizes. */
+  .node { width: clamp(68px, 20vw, 100px); height: clamp(68px, 20vw, 100px); font-size: clamp(0.6rem, 2.6vw, 0.74rem); }
+  .center-node { width: clamp(98px, 27vw, 138px); height: clamp(98px, 27vw, 138px); font-size: clamp(0.68rem, 3vw, 0.84rem); }
+
+  .sidebar-group {
+    position: fixed;
+    inset: 0;
+    right: 0;
+    height: 100dvh;
+    width: 0;         /* the group itself takes no layout space anymore */
+    z-index: 40;
+    pointer-events: none; /* let taps pass through to the diagram when both drawers are closed */
+  }
+
+  .layout.panels-open .sidebar-group {
+    position: fixed;
+    inset: 0;
+    width: 0;
+    height: 100dvh;
+    background: transparent;
+  }
+
+  .sidebar-group:has(.sidebar.open) {
+    pointer-events: auto;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    right: 0; /* RTL: drawers slide in from the right edge of the screen */
+    height: 100dvh;
+    max-width: 100vw;
+    box-shadow: -6px 0 24px rgba(0, 0, 0, 0.5);
+    z-index: 41;
+  }
+
+  .sidebar.open { width: min(var(--sidebar-w), 86vw); }
+
+  /* detail drawer stacks above the list drawer, offset so both stay reachable */
+  .sidebar.patient-panel {
+    z-index: 42;
+  }
+  .sidebar.patient-panel.open { width: min(var(--sidebar-patient-w), 92vw); }
+  .sidebar.metadata-panel {
+    z-index: 43;
+  }
+  .sidebar.metadata-panel.open { width: min(var(--sidebar-metadata-w), 92vw); }
+
+  .sidebar-inner,
+  .sidebar.patient-panel .sidebar-inner,
+  .sidebar.metadata-panel .sidebar-inner {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 560px) {
+  header { padding: 12px 14px; column-gap: 8px; }
+  header .brand { font-size: 1.3rem; }
+  header .header-sub { font-size: 0.8rem; }
+  .badge { font-size: 0.72rem; padding: 3px 10px; }
+}
+
+@media (max-width: 420px) {
+  header { padding: 10px 12px; }
+  header .brand { font-size: 1.15rem; }
+  header .header-sub { display: none; } /* keeps the badge + centered brand readable on very narrow phones */
+  .diagram { width: 90vw; }
+}
+
+/* scrollbar */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }

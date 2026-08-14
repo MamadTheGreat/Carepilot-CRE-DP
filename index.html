@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CarePilot — Question Bank</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<header>
+  <span class="badge">Interactive Map</span>
+  <h1 class="brand">CarePilot</h1>
+  <span class="header-sub">Question Bank – Diabetes Pathway</span>
+</header>
+
+<div class="layout">
+
+  <!-- Sidebars (RTL: appear on right side) -->
+  <div class="sidebar-group">
+    <!-- Sidebar 1: sub-items list -->
+    <div class="sidebar" id="sidebar1">
+      <div class="sidebar-inner">
+        <div class="sidebar-header">
+          <span class="sidebar-title" id="sidebar1-title"></span>
+          <button class="close-btn" onclick="closeSidebar1()" aria-label="بستن">✕</button>
+        </div>
+        <ul class="sidebar-list" id="sidebar1-list"></ul>
+      </div>
+    </div>
+
+    <!-- Sidebar 2: patient-facing question -->
+    <div class="sidebar patient-panel" id="sidebar2">
+      <div class="sidebar-inner">
+        <div class="sidebar-header">
+          <span class="sidebar-title" id="sidebar2-title"></span>
+          <button class="close-btn" onclick="closeSidebar2()" aria-label="بستن">✕</button>
+        </div>
+        <div class="patient-content" id="sidebar2-content"></div>
+      </div>
+    </div>
+
+    <!-- Sidebar 3: rule-engine metadata -->
+    <div class="sidebar metadata-panel" id="sidebar3">
+      <div class="sidebar-inner">
+        <div class="sidebar-header">
+          <span class="sidebar-title" id="sidebar3-title"></span>
+          <button class="close-btn" onclick="closeSidebar3()" aria-label="بستن">✕</button>
+        </div>
+        <div class="detail-content" id="sidebar3-content"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Diagram -->
+  <div class="diagram-wrap" id="diagram-wrap">
+    <div class="diagram" id="diagram">
+      <svg class="connector-svg" id="connector-svg"></svg>
+      <div class="center-node">Clinical<br>Rules<br>Engine</div>
+    </div>
+  </div>
+
+</div>
+
+<script type="module" src="engine.js"></script>
+</body>
+</html>
